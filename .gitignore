@@ -127,3 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pre-training weight
+.weight_h5/
+.data/Dataset/Annotations/
+.data/Dataset/JPEGImages/

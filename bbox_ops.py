@@ -133,7 +133,8 @@ class ProposalTargetLayer(tf.keras.layers.Layer):
 
         return labels, rois, roi_scores, bbox_targets, bbox_inside_weights
 
-    def call(self, rpn_rois, rpn_scores, gt_boxes):
+    # def call(self, rpn_rois, rpn_scores, gt_boxes):
+    def call(self, inputs, rpn_scores, gt_boxes):
         """
         Assign object detection proposals to ground-truth targets. Produces proposal
         classification labels and bounding-box regression targets.
@@ -141,7 +142,7 @@ class ProposalTargetLayer(tf.keras.layers.Layer):
 
         # Proposal ROIs (0, x1, y1, x2, y2) coming from RPN
         # (i.e., rpn.proposal_layer.ProposalLayer), or any other source
-        all_rois = rpn_rois
+        all_rois = inputs 
         all_scores = rpn_scores
 
         # Include ground-truth boxes in the set of candidate rois

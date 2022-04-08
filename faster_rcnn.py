@@ -22,12 +22,13 @@ class ProposalLayer(tf.keras.layers.Layer):
         self.rpn_nms_threshold = rpn_nms_threshold
         self.num_anchors = num_anchors
 
-    def call(self, rpn_cls_prob, rpn_bbox_pred, anchors, im_info):
+    # def call(self, rpn_cls_prob, rpn_bbox_pred, anchors, im_info):
+    def call(self, inputs, rpn_bbox_pred, anchors, im_info):
         """ 预测的边框与anchors进行比对, 非极大抑制后输出最终目标边框, 这里边框处理成了[x1,y1,x2,y2] """
 
         # Get the scores and bounding boxes
 
-        scores = tf.reshape(rpn_cls_prob, (-1, 2))[:,1]
+        scores = tf.reshape(inputs , (-1, 2))[:,1]
         # scores = rpn_cls_prob[:, :, :, self.num_anchors:]
         # scores = tf.reshape(scores, shape=(-1,))
         rpn_bbox_pred = tf.reshape(rpn_bbox_pred, shape=(-1, 4))
@@ -57,7 +58,8 @@ class CropPoolLayer(tf.keras.layers.Layer):
         self.pool_size_after_rpn = pool_size_after_rpn
         super(CropPoolLayer, self).__init__()
 
-    def call(self, bottom, rois, im_info):
+    # def call(self, bottom, rois, im_info):
+    def call(self, inputs, rois, im_info):
         """ 裁剪层, 对卷积网络层输出的特征, 根据rpn层输出的roi进行裁剪, 且resize到统一的大小
 
         :return [bbox_nums, pre_pool_size, pre_pool_size, depth]
@@ -74,7 +76,7 @@ class CropPoolLayer(tf.keras.layers.Layer):
         bboxes = tf.concat([y1, x1, y2, x2], axis=1)
         pre_pool_size = self.pool_size_after_rpn * 2
         # [bbox_nums, pre_pool_size, pre_pool_size, depth]
-        crops = tf.image.crop_and_resize(image=bottom,
+        crops = tf.image.crop_and_resize(image=inputs,
                                          boxes=bboxes,
                                          box_indices=tf.cast(batch_ids, dtype=tf.int32),
                                          crop_size=[pre_pool_size, pre_pool_size])
@@ -190,7 +192,8 @@ class FasterRCNN:
             rois, roi_scores = ProposalLayer(rpn_post_nms_top_n=self.rpn_post_nms_top_n,
                                              rpn_nms_threshold=self.rpn_nms_threshold,
                                              num_anchors=self.num_anchors)(
-                rpn_cls_prob=rpn_cls_prob,
+                # rpn_cls_prob=rpn_cls_prob,
+                inputs=rpn_cls_prob,
                 rpn_bbox_pred=rpn_bbox_pred,
                 anchors=anchors,
                 im_info=im_info
@@ -207,7 +210,7 @@ class FasterRCNN:
                     rpn_bbox_inside_weights=self.rpn_bbox_inside_weights,
                     rpn_positive_weight=self.rpn_positive_weight
                 )(
-                    rpn_cls_score=rpn_cls_score,
+                    inputs=rpn_cls_score,
                     all_anchors=anchors,
                     gt_boxes=gt_boxes[0],
                     im_info=im_info
@@ -228,7 +231,7 @@ class FasterRCNN:
                     train_bbox_normalize_stds=self.train_bbox_normalize_stds,
                     bbox_inside_weight=self.bbox_inside_weight
                 )(
-                    rpn_rois=rois,
+                    inputs=rois,
                     rpn_scores=roi_scores,
                     gt_boxes=gt_boxes[0],
                 )
@@ -271,7 +274,8 @@ class FasterRCNN:
             rois, roi_scores = ProposalLayer(rpn_post_nms_top_n=self.rpn_post_nms_top_n,
                                              rpn_nms_threshold=self.rpn_nms_threshold,
                                              num_anchors=self.num_anchors)(
-                rpn_cls_prob=rpn_cls_prob,
+                #rpn_cls_prob=rpn_cls_prob,
+                inputs=rpn_cls_prob,
                 rpn_bbox_pred=rpn_bbox_pred,
                 anchors=anchors,
                 im_info=im_info
@@ -416,8 +420,7 @@ class FasterRCNN:
         feature_map_width = tf.shape(feature_map)[2]
         anchors, anchors_length = GenerateAnchors(feat_stride=self.feat_stride,
                                                   anchor_scales=self.anchor_scales,
-                                                  anchor_ratios=self.anchor_ratios)(height=feature_map_height,
-                                                                                    width=feature_map_width)
+                                                  anchor_ratios=self.anchor_ratios)(([feature_map_height, feature_map_width]))
         # x = tf.range(tf.shape(feature_map)[1])
         if is_training:
             # rpn, 第一次bbox回归, class分类
@@ -430,7 +433,7 @@ class FasterRCNN:
             #
             # # 后卷积池化全连接, 第二次bbox回归, class分类
             pool5 = CropPoolLayer(pool_size_after_rpn=self.pool_size_after_rpn)(
-                bottom=feature_map,
+                inputs=feature_map,
                 rois=rois,
                 im_info=im_info)
             fc7 = self.base_model.head_to_tail(pool5)
@@ -453,7 +456,7 @@ class FasterRCNN:
                                               is_training=is_training)
             # 后卷积池化全连接, 第二次bbox回归, class分类
             pool5 = CropPoolLayer(pool_size_after_rpn=self.pool_size_after_rpn)(
-                bottom=feature_map,
+                inputs=feature_map,
                 rois=rois,
                 im_info=im_info)
             fc7 = self.base_model.head_to_tail(pool5)
@@ -626,8 +629,9 @@ class FasterRCNN:
     def test(self):
         frcnn = self.build_graph(is_training=False)
         frcnn.load_weights("./frcnn.h5")
-        data_generator = DataGenerator(voc_data_path='../../data/detect_data/',
-                                       classes=['__background__', "cat", "dog"],
+        # data_generator = DataGenerator(voc_data_path='../../data/detect_data/',
+        data_generator = DataGenerator(voc_data_path='./data/Dataset/',
+                                       classes=['__background__', "apple"],
                                        batch_size=1)
         train_imgs, train_gt_boxes = data_generator.next_batch()
         img_shape = tf.shape(train_imgs)
@@ -676,7 +680,7 @@ if __name__ == "__main__":
     # frcnn.train(epochs=100, data_root_path='../../data/detect_data', log_dir='./logs', save_path='./')
     frcnn = FasterRCNN(rpn_positive_overlap=0.7,
                        classes=['__background__','apple'])
-    frcnn.train(epochs=100, data_root_path='./data/Dataset/', log_dir='./logs', save_path='./')
+    frcnn.train(epochs=100, data_root_path='./data/Dataset', log_dir='./logs', save_path='./')
     # frcnn = FasterRCNN(rpn_positive_overlap=0.7,
     #                        classes=['__background__','car'])
     # frcnn.train(epochs=100, data_root_path='../../data/bd100k', log_dir='./logs', save_path='./')

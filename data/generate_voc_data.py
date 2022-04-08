@@ -29,7 +29,7 @@ class DataGenerator:
                  ):
         self.annotation_files_root_path = os.path.join(voc_data_path, "Annotations")
         self.img_files_root_path = os.path.join(voc_data_path, "JPEGImages")
-        self.imgset_root_path = os.path.join(voc_data_path, "ImageSets", "Main")
+        self.imgset_root_path = os.path.join(voc_data_path, "ImageSets")
         self.max_box_fraction = max_box_fraction
         self.batch_size = batch_size
         self.is_training = is_training
@@ -352,9 +352,7 @@ class VOC2012DataGenerator:
                           [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128], [0, 64, 0], [128, 64, 0],
                           [0, 192, 0], [128, 192, 0], [0, 64, 128]]
 
-        self.classes = ['__background__', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat',
-                        'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'potted plant',
-                        'sheep', 'sofa', 'train', 'tv/monitor']
+        self.classes = ['__background__', 'apple']
         self.colormap2label = np.zeros(256 ** 3)
         for i, colormap in enumerate(self.color_map):
             self.colormap2label[(colormap[0] * 256 + colormap[1]) * 256 + colormap[2]] = i

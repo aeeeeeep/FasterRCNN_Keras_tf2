@@ -16,16 +16,16 @@ class GenerateAnchors(tf.keras.layers.Layer):
         self.feat_stride = feat_stride
         self.anchors_shift = generate_anchors(ratios=np.array(anchor_ratios), scales=np.array(anchor_scales))
 
-    def call(self, height, width):
-        shift_x = tf.multiply(tf.range(width, name='range_shift_x'), self.feat_stride)
+    def call(self, inputs):
+        shift_x = tf.multiply(tf.range(inputs[1], name='range_shift_x'), self.feat_stride)
         # height
-        shift_y = tf.multiply(tf.range(height,name='range_shift_y'), self.feat_stride)
+        shift_y = tf.multiply(tf.range(inputs[0],name='range_shift_y'), self.feat_stride)
         shift_x, shift_y = tf.meshgrid(shift_x, shift_y, name="meshgrid_x_y")
         sx = tf.reshape(shift_x, shape=(-1,), name='reshape_sx')
         sy = tf.reshape(shift_y, shape=(-1,), name='reshape_sy')
         xyxy = tf.stack([sx, sy, sx, sy], name='stack_xyxy')
         shifts = tf.transpose(xyxy, name='transpose_shifts')
-        K = tf.multiply(width, height, name='multi_w_h')
+        K = tf.multiply(inputs[1], inputs[0], name='multi_w_h')
         shifts_reshape = tf.reshape(shifts, shape=[1, K, 4], name='shifts_reshape')
         shifts = tf.transpose(shifts_reshape, perm=(1, 0, 2))
 
@@ -209,7 +209,8 @@ class AnchorTargetLayer(tf.keras.layers.Layer):
             inds_expand = tf.expand_dims(inds, axis=1)
             return tf.tensor_scatter_nd_update(ret, inds_expand, data)
 
-    def call(self, rpn_cls_score, gt_boxes, im_info, all_anchors):
+    # def call(self, rpn_cls_score, gt_boxes, im_info, all_anchors):
+    def call(self, inputs, gt_boxes, im_info, all_anchors):
         """Same as the anchor target layer in original Fast/er RCNN """
         A = self.num_anchors
         total_anchors = tf.shape(all_anchors)[0]
@@ -217,8 +218,8 @@ class AnchorTargetLayer(tf.keras.layers.Layer):
         _allowed_border = 0
 
         # map of shape (..., H, W, C)
-        height = tf.shape(rpn_cls_score)[1]
-        width = tf.shape(rpn_cls_score)[2]
+        height = tf.shape(inputs)[1]
+        width = tf.shape(inputs)[2]
 
         # only keep anchors inside the image
         inds_inside = tf.reshape(tf.where(
@@ -364,7 +365,7 @@ if __name__ == '__main__':
     # for i in anchors:
     #     print(i)
 
-    anchors, length = GenerateAnchors()(height = int(88.0 / 16.0), width=int(400.0 / 16.0))
+    anchors, length = GenerateAnchors()(([int(88.0 / 16.0), int(400.0 / 16.0)]))
     for i in anchors:
         print(i)
     # overlaps = tf.reshape(bbox_overlaps_tf(anchors, np.array([[128,22.,240,222.]], dtype=np.float32)), shape=(-1,))
