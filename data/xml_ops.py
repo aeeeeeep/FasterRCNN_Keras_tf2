@@ -63,7 +63,7 @@ def save_voc_xml(im_shape, bound_box, name, save_file_path):
     template_data["annotation"]['size']['depth'] = im_shape[2]
     for box in bound_box:
         template_data["annotation"]['object'].append({
-            "name": "watermark",
+            "name": "apple",
             "pose": "Unspecified",
             "truncated": "0",
             "difficult": "0",
@@ -79,9 +79,8 @@ def save_voc_xml(im_shape, bound_box, name, save_file_path):
         dict2xml(template_data, xml_save_file)
 
 if __name__ == "__main__":
-    pass
-    #file = "./Dataset/Annotations/00231.xml"
-    #xml_dict = xml2dict(file)
-    #print(xml_dict['annotation']['object'])
+    file = "/home/pacaep/FasterRCNN_Keras_tf2/data/Dataset/Annotations/00003.xml"
+    xml_dict = xml2dict(file)
+    print(xml_dict['annotation']['object'])
     # xml_data = xmltodict.unparse(xml_dict, pretty=True, full_document=False)
     # print(xml_data)

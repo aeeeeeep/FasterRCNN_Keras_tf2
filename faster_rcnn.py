@@ -680,7 +680,7 @@ if __name__ == "__main__":
     # frcnn.train(epochs=100, data_root_path='../../data/detect_data', log_dir='./logs', save_path='./')
     frcnn = FasterRCNN(rpn_positive_overlap=0.7,
                        classes=['__background__','apple'])
-    frcnn.train(epochs=100, data_root_path='./data/Dataset', log_dir='./logs', save_path='./')
+    frcnn.train(epochs=100, data_root_path='./data/Dataset/', log_dir='./logs', save_path='./')
     # frcnn = FasterRCNN(rpn_positive_overlap=0.7,
     #                        classes=['__background__','car'])
     # frcnn.train(epochs=100, data_root_path='../../data/bd100k', log_dir='./logs', save_path='./')

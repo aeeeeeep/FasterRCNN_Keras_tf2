@@ -379,7 +379,7 @@ if __name__ == "__main__":
     # print(gray)
     # print(max_gray)
 
-    mask_file = "../data/Dataset/SegmentationClass/00001.jpg"
+    mask_file = "../data/Dataset/JPEGImages/00023.jpg"
     vdg = VOC2012DataGenerator()
     data = vdg.generate_voc_2012_mask(mask_file)
     for i in range(np.shape(data)[0]):
